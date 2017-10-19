@@ -1,3 +1,12 @@
 body {
-  background-color: #fff;
+  background-color: gray;
+}
+
+h1 {
+  color: white;
+}
+
+h1:hover {
+  -webkit-transition: color 1s ease;
+  transition: color 1s ease;
 }
