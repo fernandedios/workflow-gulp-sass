@@ -9,19 +9,24 @@ var browserify = require('gulp-browserify');
 var clean = require('gulp-clean');
 var concat = require('gulp-concat');
 var merge = require('merge-stream');
+var newer = require('gulp-newer');
+var imagemin = require('gulp-imagemin');
 
 // files on src folder
 var SOURCEPATHS = {
   sassSource: 'src/scss/*.scss', // all scss files
   htmlSource: 'src/*.html', // all html files
-  jsSource: 'src/js/**' // all files in js folder
+  jsSource: 'src/js/**', // all files in js folder
+  imgSource: 'src/img/**' // all files in img folder
 };
 
 // files in the app folder
 var APPPATH = {
   root: 'app/',
   css: 'app/css',
-  js: 'app/js'
+  js: 'app/js',
+  fonts: 'app/fonts',
+  img: 'app/img'
 };
 
 // garbage collection task for html files
@@ -54,6 +59,21 @@ gulp.task('sass', function() {
     .pipe(gulp.dest(APPPATH.css)); // define where to output css file
 });
 
+// images task
+gulp.task('images', function() {
+  return gulp.src(SOURCEPATHS.imgSource)
+    .pipe(newer(APPPATH.img)) // check for newer image files
+    .pipe(imagemin()) // minify images returned from newer
+    .pipe(gulp.dest(APPPATH.img)); // transfer minified images to destination folder
+});
+
+// fonts task
+gulp.task('moveFonts', function() {
+  // reference bootstrap font files directly
+  gulp.src('./node_modules/bootstrap/dist/fonts/*.{eot,svg,ttf,woff,woff2}') // file extensions separated by comma, NO spaces
+    .pipe(gulp.dest(APPPATH.fonts)); // destination folder
+});
+
 // javascript copy task
 // do clean-scripts task as well for unused js files
 gulp.task('scripts', ['clean-scripts'], function() {
@@ -82,10 +102,11 @@ gulp.task('serve', ['sass'], function() { // start tasks in the array first befo
 });
 
 // unified watch task
-gulp.task('watch', ['serve', 'sass', 'clean-html', 'clean-scripts', 'scripts', 'copy'], function() { // add tasks in an array
+gulp.task('watch', ['serve', 'sass', 'clean-html', 'clean-scripts', 'scripts', 'copy', 'moveFonts', 'images'], function() { // add tasks in an array
   gulp.watch([SOURCEPATHS.sassSource], ['sass']); // watch scss files for changes. run sass task if detected
   gulp.watch([SOURCEPATHS.htmlSource], ['copy']); // watch html files for changes. run copy task if detected
   gulp.watch([SOURCEPATHS.jsSource], ['scripts']); // watch js files for changes. run scripts task if detected
+  gulp.watch([SOURCEPATHS.imgSource], ['images']); // watch files for changes. run images task if detected
 });
 
 gulp.task('default', ['watch']); // launch watch task as default
