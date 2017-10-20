@@ -7,11 +7,13 @@ var reload = browserSync.reload; // enable reload
 var autoprefixer = require('gulp-autoprefixer');
 var clean = require('gulp-clean');
 
+var concat = require('gulp-concat');
+
 // files on src folder
 var SOURCEPATHS = {
   sassSource: 'src/scss/*.scss', // all scss files
   htmlSource: 'src/*.html', // all html files
-  jsSource: 'src/js/**' // all in js folder
+  jsSource: 'src/js/**' // all files in js folder
 };
 
 // files in the app folder
@@ -48,8 +50,9 @@ gulp.task('sass', function() {
 // javascript copy task
 // do clean-scripts task as well for unused js files
 gulp.task('scripts', ['clean-scripts'], function() {
-  gulp.src(SOURCEPATHS.jsSource) // defile javascript src
-    .pipe(gulp.dest(APPPATH.js)); // define where to copy js files
+  gulp.src(SOURCEPATHS.jsSource) // define javascript src
+    .pipe(concat('main.js')) // define output filename
+    .pipe(gulp.dest(APPPATH.js)); // define where to copy final js file
 });
 
 // task to copy html files from src to app folder
