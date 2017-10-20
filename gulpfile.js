@@ -5,9 +5,10 @@ var browserSync = require('browser-sync');
 var reload = browserSync.reload; // enable reload
 
 var autoprefixer = require('gulp-autoprefixer');
+var browserify = require('gulp-browserify');
 var clean = require('gulp-clean');
-
 var concat = require('gulp-concat');
+var merge = require('merge-stream');
 
 // files on src folder
 var SOURCEPATHS = {
@@ -41,9 +42,15 @@ gulp.task('clean-scripts', function() {
 
 // SASS task, take special care of the pipe order
 gulp.task('sass', function() {
-  return gulp.src(SOURCEPATHS.sassSource) // define sass files
+  var bootsrapCSS = gulp.src('./node_modules/bootstrap/dist/css/bootstrap.css') // reference bootstrap stylesheet css directly
+  var sassFiles;
+
+  sassFiles = gulp.src(SOURCEPATHS.sassSource) // define sass files
     .pipe(autoprefixer()) // enable autoprefixer
-    .pipe(sass({ outputStyle: 'expanded' }).on('error', sass.logError)) // define sass output style
+    .pipe(sass({ outputStyle: 'expanded' }).on('error', sass.logError)); // define sass output style
+
+  return merge(bootsrapCSS, sassFiles) // define css files to merge, take special care of ordering, custom styles should be last
+    .pipe(concat('app.css')) // do concat on the files, define output file
     .pipe(gulp.dest(APPPATH.css)); // define where to output css file
 });
 
@@ -52,6 +59,7 @@ gulp.task('sass', function() {
 gulp.task('scripts', ['clean-scripts'], function() {
   gulp.src(SOURCEPATHS.jsSource) // define javascript src
     .pipe(concat('main.js')) // define output filename
+    .pipe(browserify()) // enable browserify
     .pipe(gulp.dest(APPPATH.js)); // define where to copy final js file
 });
 
@@ -74,7 +82,7 @@ gulp.task('serve', ['sass'], function() { // start tasks in the array first befo
 });
 
 // unified watch task
-gulp.task('watch', ['serve', 'sass', 'scripts', 'copy', 'clean-html', 'clean-scripts'], function() { // add tasks in an array
+gulp.task('watch', ['serve', 'sass', 'clean-html', 'clean-scripts', 'scripts', 'copy'], function() { // add tasks in an array
   gulp.watch([SOURCEPATHS.sassSource], ['sass']); // watch scss files for changes. run sass task if detected
   gulp.watch([SOURCEPATHS.htmlSource], ['copy']); // watch html files for changes. run copy task if detected
   gulp.watch([SOURCEPATHS.jsSource], ['scripts']); // watch js files for changes. run scripts task if detected
