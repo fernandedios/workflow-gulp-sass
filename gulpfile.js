@@ -11,11 +11,13 @@ var concat = require('gulp-concat');
 var merge = require('merge-stream');
 var newer = require('gulp-newer');
 var imagemin = require('gulp-imagemin');
+var injectPartials = require('gulp-inject-partials');
 
 // files on src folder
 var SOURCEPATHS = {
   sassSource: 'src/scss/*.scss', // all scss files
   htmlSource: 'src/*.html', // all html files
+  htmlPartialSource: 'src/partial/*.html', // all partial files
   jsSource: 'src/js/**', // all files in js folder
   imgSource: 'src/img/**' // all files in img folder
 };
@@ -85,9 +87,16 @@ gulp.task('scripts', ['clean-scripts'], function() {
 
 // task to copy html files from src to app folder
 // do clean-html task as well for unused html files
-gulp.task('copy', ['clean-html'], function() {
+/* gulp.task('copy', ['clean-html'], function() {
   gulp.src(SOURCEPATHS.htmlSource)
     .pipe(gulp.dest(APPPATH.root))
+}); */
+
+// html task, replace 'copy' task
+gulp.task('html', function() {
+  return gulp.src(SOURCEPATHS.htmlSource) // define html source
+    .pipe(injectPartials()) // enable inject partials
+    .pipe(gulp.dest(APPPATH.root)); // destination folder
 });
 
 // browser-sync server task
@@ -102,9 +111,10 @@ gulp.task('serve', ['sass'], function() { // start tasks in the array first befo
 });
 
 // unified watch task
-gulp.task('watch', ['serve', 'sass', 'clean-html', 'clean-scripts', 'scripts', 'copy', 'moveFonts', 'images'], function() { // add tasks in an array
+gulp.task('watch', ['serve', 'sass', 'clean-html', 'clean-scripts', 'scripts', /*'copy',*/ 'html', 'moveFonts', 'images'], function() { // add tasks in an array
   gulp.watch([SOURCEPATHS.sassSource], ['sass']); // watch scss files for changes. run sass task if detected
-  gulp.watch([SOURCEPATHS.htmlSource], ['copy']); // watch html files for changes. run copy task if detected
+  // gulp.watch([SOURCEPATHS.htmlSource], ['copy']); // watch html files for changes. run copy task if detected
+  gulp.watch([SOURCEPATHS.htmlSource, SOURCEPATHS.htmlPartialSource], ['html']); // watch html and partial files for changes. run copy task if detected
   gulp.watch([SOURCEPATHS.jsSource], ['scripts']); // watch js files for changes. run scripts task if detected
   gulp.watch([SOURCEPATHS.imgSource], ['images']); // watch files for changes. run images task if detected
 });
