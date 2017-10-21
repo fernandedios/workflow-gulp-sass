@@ -15,6 +15,7 @@ var injectPartials = require('gulp-inject-partials');
 var minify = require('gulp-minify');
 var rename = require('gulp-rename');
 var cssmin = require('gulp-cssmin');
+var htmlmin = require('gulp-htmlmin');
 
 // files on src folder
 var SOURCEPATHS = {
@@ -113,6 +114,20 @@ gulp.task('serve', ['sass'], function() { // start tasks in the array first befo
   );
 });
 
+// UNIFIED watch task
+gulp.task('watch', ['serve', 'sass', 'clean-html', 'clean-scripts', 'scripts', /*'copy',*/ 'html', 'moveFonts', 'images'], function() { // add tasks in an array
+  gulp.watch([SOURCEPATHS.sassSource], ['sass']); // watch scss files for changes. run sass task if detected
+  // gulp.watch([SOURCEPATHS.htmlSource], ['copy']); // watch html files for changes. run copy task if detected
+  gulp.watch([SOURCEPATHS.htmlSource, SOURCEPATHS.htmlPartialSource], ['html']); // watch html and partial files for changes. run copy task if detected
+  gulp.watch([SOURCEPATHS.jsSource], ['scripts']); // watch js files for changes. run scripts task if detected
+  gulp.watch([SOURCEPATHS.imgSource], ['images']); // watch files for changes. run images task if detected
+});
+
+// default task
+gulp.task('default', ['watch']); // launch watch task as default
+
+
+
 /* ---- PRODUCTION TASKS ---- */
 
 // compress task, minified js output
@@ -140,16 +155,15 @@ gulp.task('compresscss', function() {
     .pipe(gulp.dest(APPPATH.css)); // define where to output css file
 });
 
-/* ---- END PRODUCTION TASKS ---- */
-
-
-// unified watch task
-gulp.task('watch', ['serve', 'sass', 'clean-html', 'clean-scripts', 'scripts', /*'copy',*/ 'html', 'moveFonts', 'images'], function() { // add tasks in an array
-  gulp.watch([SOURCEPATHS.sassSource], ['sass']); // watch scss files for changes. run sass task if detected
-  // gulp.watch([SOURCEPATHS.htmlSource], ['copy']); // watch html files for changes. run copy task if detected
-  gulp.watch([SOURCEPATHS.htmlSource, SOURCEPATHS.htmlPartialSource], ['html']); // watch html and partial files for changes. run copy task if detected
-  gulp.watch([SOURCEPATHS.jsSource], ['scripts']); // watch js files for changes. run scripts task if detected
-  gulp.watch([SOURCEPATHS.imgSource], ['images']); // watch files for changes. run images task if detected
+// minifyhtml task, minified html output
+gulp.task('minifyhtml', function() {
+  return gulp.src(SOURCEPATHS.htmlSource) // define html source
+    .pipe(injectPartials()) // enable inject partials
+    .pipe(htmlmin({ collapseWhitespace: true })) // enable htmlmin, remove whitespaces
+    .pipe(gulp.dest(APPPATH.root)); // destination folder
 });
 
-gulp.task('default', ['watch']); // launch watch task as default
+// UNIFIED production task
+gulp.task('production', ['minifyhtml', 'compresscss', 'compress']);
+
+/* ---- END PRODUCTION TASKS ---- */
