@@ -12,6 +12,9 @@ var merge = require('merge-stream');
 var newer = require('gulp-newer');
 var imagemin = require('gulp-imagemin');
 var injectPartials = require('gulp-inject-partials');
+var minify = require('gulp-minify');
+var rename = require('gulp-rename');
+var cssmin = require('gulp-cssmin');
 
 // files on src folder
 var SOURCEPATHS = {
@@ -109,6 +112,36 @@ gulp.task('serve', ['sass'], function() { // start tasks in the array first befo
     { server: { baseDir: APPPATH.root } } // start server on this folder
   );
 });
+
+/* ---- PRODUCTION TASKS ---- */
+
+// compress task, minified js output
+gulp.task('compress', function() {
+  gulp.src(SOURCEPATHS.jsSource) // define javascript src
+    .pipe(concat('main.js')) // define output filename
+    .pipe(browserify()) // enable browserify
+    .pipe(minify()) // enable minify
+    .pipe(gulp.dest(APPPATH.js)); // define where to copy final js file
+});
+
+// compresscss task, minified css output
+gulp.task('compresscss', function() {
+  var bootsrapCSS = gulp.src('./node_modules/bootstrap/dist/css/bootstrap.css') // reference bootstrap stylesheet css directly
+  var sassFiles;
+
+  sassFiles = gulp.src(SOURCEPATHS.sassSource) // define sass files
+    .pipe(autoprefixer()) // enable autoprefixer
+    .pipe(sass({ outputStyle: 'expanded' }).on('error', sass.logError)); // define sass output style
+
+  return merge(bootsrapCSS, sassFiles) // define css files to merge, take special care of ordering, custom styles should be last
+    .pipe(concat('app.css')) // do concat on the files, define output file
+    .pipe(cssmin()) // enable cssmin
+    .pipe(rename({ suffix: '.min' })) // rename file with .min suffix
+    .pipe(gulp.dest(APPPATH.css)); // define where to output css file
+});
+
+/* ---- END PRODUCTION TASKS ---- */
+
 
 // unified watch task
 gulp.task('watch', ['serve', 'sass', 'clean-html', 'clean-scripts', 'scripts', /*'copy',*/ 'html', 'moveFonts', 'images'], function() { // add tasks in an array
